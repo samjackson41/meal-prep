@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, MessageSquare, ArrowLeft } from "lucide-react";
+import { MessageSquare, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MealCard } from "@/components/MealCard";
@@ -33,9 +33,6 @@ export default function Home() {
   // --- Confirmation ---
   const [confirmedParams, setConfirmedParams] = useState<SpoonacularParams | null>(null);
   const [confirmationSummary, setConfirmationSummary] = useState("");
-
-  // --- Preferences panel ---
-  const [showPreferences, setShowPreferences] = useState(false);
 
   const { preferences, savePreferences, hasPreferences } = usePreferences();
   const { saveRecipe } = useLocalRecipes();
@@ -210,35 +207,22 @@ export default function Home() {
       <div className="max-w-5xl mx-auto px-4 py-10">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold">Meal Planner</h1>
-          <button
-            type="button"
-            onClick={() => setShowPreferences(true)}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="Preferences"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
-        </div>
+        <h1 className="text-3xl font-bold mb-2">Meal Planner</h1>
         <p className="text-muted-foreground mb-8">
           Describe what you want and get personalised meal suggestions.
         </p>
 
-        {/* Soft preferences nudge */}
-        {!hasPreferences && phase === "idle" && (
-          <button
-            type="button"
-            onClick={() => setShowPreferences(true)}
-            className="w-full mb-6 rounded-lg border border-dashed border-muted-foreground/40 px-4 py-3 text-sm text-muted-foreground hover:border-muted-foreground hover:text-foreground transition-colors text-left"
-          >
-            <span className="font-medium">Set up your preferences</span> — tell us your cooking
-            methods and what healthy means to you for better suggestions. →
-          </button>
+        {/* Inline preferences accordion */}
+        {(phase === "idle" || !hasPreferences) && (
+          <PreferencesPanel
+            preferences={preferences}
+            onSave={savePreferences}
+            requireSetup={!hasPreferences}
+          />
         )}
 
         {/* ---- IDLE ---- */}
-        {phase === "idle" && (
+        {phase === "idle" && hasPreferences && (
           <>
             <form onSubmit={handleDirectSubmit} className="flex gap-2 mb-4">
               <input
@@ -426,13 +410,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Preferences panel */}
-      <PreferencesPanel
-        open={showPreferences}
-        onClose={() => setShowPreferences(false)}
-        preferences={preferences}
-        onSave={savePreferences}
-      />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { UserPreferencesSchema, type UserPreferences } from "@/lib/schemas";
+import { UserPreferencesSchema, CookingMethodSchema, type UserPreferences } from "@/lib/schemas";
 
 const STORAGE_KEY = "meal-prep:preferences";
+const SAVED_FLAG_KEY = "meal-prep:preferences:saved";
 
+// All methods on by default so the first-time form is ready to save immediately
 const DEFAULT_PREFS: UserPreferences = {
-  cookingMethods: [],
+  cookingMethods: CookingMethodSchema.options.slice(),
   healthProfile: { favor: [], avoid: [] },
 };
 
@@ -24,20 +26,24 @@ function readPrefs(): UserPreferences {
 
 function writePrefs(prefs: UserPreferences): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  localStorage.setItem(SAVED_FLAG_KEY, "1");
   window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }));
 }
 
 export function usePreferences() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFS);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
     setPreferences(readPrefs());
+    setHasSaved(localStorage.getItem(SAVED_FLAG_KEY) === "1");
     setIsLoaded(true);
 
     function handleStorage(e: StorageEvent) {
       if (e.key === STORAGE_KEY || e.key === null) {
         setPreferences(readPrefs());
+        setHasSaved(localStorage.getItem(SAVED_FLAG_KEY) === "1");
       }
     }
 
@@ -49,13 +55,11 @@ export function usePreferences() {
     const validated = UserPreferencesSchema.parse(prefs);
     writePrefs(validated);
     setPreferences(validated);
+    setHasSaved(true);
   }, []);
 
-  const hasPreferences =
-    isLoaded &&
-    (preferences.cookingMethods.length > 0 ||
-      preferences.healthProfile.favor.length > 0 ||
-      preferences.healthProfile.avoid.length > 0);
+  // hasPreferences is true only after the user has explicitly hit Save at least once
+  const hasPreferences = isLoaded && hasSaved;
 
   return { preferences, savePreferences, isLoaded, hasPreferences };
 }

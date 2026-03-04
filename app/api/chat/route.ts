@@ -14,6 +14,7 @@ const COOKING_METHOD_LABELS: Record<string, string> = {
   oven: "oven / baked",
   air_fryer: "air fryer",
   crock_pot: "slow cooker / crock pot",
+  microwave: "microwave",
 };
 
 const FAVOR_LABELS: Record<string, string> = {
@@ -34,7 +35,6 @@ const AVOID_LABELS: Record<string, string> = {
   gluten: "gluten",
   dairy: "dairy",
   soy: "soy",
-  alcohol: "alcohol",
   artificial_additives: "artificial additives and preservatives",
 };
 
@@ -72,7 +72,7 @@ Good questions to ask (pick the most relevant given what you already know):
 - How many people are you cooking for?
 - How much time do you have? (e.g., under 20 minutes, up to an hour, slow cooker is fine)
 - Do you have a cuisine preference? (e.g., Italian, Asian, Mexican, Mediterranean, American)
-- Any specific ingredients you want to use or avoid beyond your saved profile?
+- Are there any other dietary needs or ingredients to avoid that aren't already in your profile? (e.g., nut allergy, no shellfish, avoiding nightshades)
 - What kind of meal is this? (breakfast, lunch, dinner, snack, dessert)
 
 ## When You Have Enough Information

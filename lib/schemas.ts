@@ -8,6 +8,7 @@ export const CookingMethodSchema = z.enum([
   "oven",
   "air_fryer",
   "crock_pot",
+  "microwave",
 ]);
 
 export const FavorTokenSchema = z.enum([
@@ -28,7 +29,6 @@ export const AvoidTokenSchema = z.enum([
   "gluten",
   "dairy",
   "soy",
-  "alcohol",
   "artificial_additives",
 ]);
 

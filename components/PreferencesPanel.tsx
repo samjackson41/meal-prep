@@ -1,9 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { UserPreferences, CookingMethod } from "@/lib/schemas";
+
+export const ALL_COOKING_METHODS: CookingMethod[] = [
+  "pan_seared",
+  "grill",
+  "oven",
+  "air_fryer",
+  "crock_pot",
+  "microwave",
+];
 
 const COOKING_METHODS: { id: CookingMethod; label: string }[] = [
   { id: "pan_seared", label: "Pan Seared / Stovetop" },
@@ -11,6 +20,7 @@ const COOKING_METHODS: { id: CookingMethod; label: string }[] = [
   { id: "oven", label: "Oven / Bake" },
   { id: "air_fryer", label: "Air Fryer" },
   { id: "crock_pot", label: "Crock Pot / Slow Cooker" },
+  { id: "microwave", label: "Microwave" },
 ];
 
 const FAVOR_PRESETS: { id: string; label: string }[] = [
@@ -31,20 +41,14 @@ const AVOID_PRESETS: { id: string; label: string }[] = [
   { id: "gluten", label: "Gluten" },
   { id: "dairy", label: "Dairy" },
   { id: "soy", label: "Soy" },
-  { id: "alcohol", label: "Alcohol" },
   { id: "artificial_additives", label: "Artificial Additives" },
 ];
 
-const PRESET_IDS = new Set([
-  ...FAVOR_PRESETS.map((p) => p.id),
-  ...AVOID_PRESETS.map((p) => p.id),
-]);
-
 interface Props {
-  open: boolean;
-  onClose: () => void;
   preferences: UserPreferences;
   onSave: (prefs: UserPreferences) => void;
+  /** If true, accordion starts open and cannot be collapsed until saved */
+  requireSetup?: boolean;
 }
 
 function TokenPills({
@@ -56,89 +60,50 @@ function TokenPills({
   selected: string[];
   onChange: (next: string[]) => void;
 }) {
-  const [customInput, setCustomInput] = useState("");
-
   function toggle(id: string) {
     onChange(
       selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]
     );
   }
 
-  function addCustom() {
-    const val = customInput.trim();
-    if (!val || selected.includes(val)) return;
-    onChange([...selected, val]);
-    setCustomInput("");
-  }
-
-  const customItems = selected.filter((s) => !PRESET_IDS.has(s));
-
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {presets.map((p) => {
-          const active = selected.includes(p.id);
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => toggle(p.id)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                active
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-background text-muted-foreground border-input hover:border-foreground"
-              }`}
-            >
-              {p.label}
-            </button>
-          );
-        })}
-      </div>
-      {customItems.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {customItems.map((item) => (
-            <span
-              key={item}
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-input"
-            >
-              {item}
-              <button
-                type="button"
-                onClick={() => onChange(selected.filter((s) => s !== item))}
-                className="ml-0.5 hover:text-destructive"
-                aria-label={`Remove ${item}`}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustom())}
-          placeholder="Add custom…"
-          className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-        <Button type="button" variant="outline" size="sm" onClick={addCustom}>
-          Add
-        </Button>
-      </div>
+    <div className="flex flex-wrap gap-2">
+      {presets.map((p) => {
+        const active = selected.includes(p.id);
+        return (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => toggle(p.id)}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              active
+                ? "bg-foreground text-background border-foreground"
+                : "bg-background text-muted-foreground border-input hover:border-foreground"
+            }`}
+          >
+            {p.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-export function PreferencesPanel({ open, onClose, preferences, onSave }: Props) {
+export function PreferencesPanel({ preferences, onSave, requireSetup = false }: Props) {
+  const [open, setOpen] = useState(requireSetup);
   const [draft, setDraft] = useState<UserPreferences>(preferences);
 
+  // Sync draft when preferences load from localStorage
   useEffect(() => {
-    if (open) setDraft(preferences);
-  }, [open, preferences]);
+    setDraft(preferences);
+  }, [preferences]);
 
-  if (!open) return null;
+  // Force open when setup is required
+  useEffect(() => {
+    if (requireSetup) setOpen(true);
+  }, [requireSetup]);
+
+  const noMethodSelected = draft.cookingMethods.length === 0;
 
   function toggleMethod(id: CookingMethod) {
     setDraft((prev) => ({
@@ -150,44 +115,56 @@ export function PreferencesPanel({ open, onClose, preferences, onSave }: Props) 
   }
 
   function handleSave() {
+    if (noMethodSelected) return;
     onSave(draft);
-    onClose();
+    if (!requireSetup) setOpen(false);
+  }
+
+  function handleToggle() {
+    if (requireSetup) return; // can't collapse until saved
+    setOpen((v) => !v);
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+    <div className="rounded-lg border bg-background mb-6 overflow-hidden">
+      {/* Accordion header */}
+      <button
+        type="button"
+        onClick={handleToggle}
+        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-left transition-colors ${
+          requireSetup
+            ? "cursor-default"
+            : "hover:bg-muted/50"
+        }`}
+        aria-expanded={open}
+      >
+        <span>
+          My Preferences
+          {!requireSetup && !open && (
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              {draft.cookingMethods.length} method{draft.cookingMethods.length !== 1 ? "s" : ""}
+              {draft.healthProfile.favor.length + draft.healthProfile.avoid.length > 0
+                ? ` · ${draft.healthProfile.favor.length + draft.healthProfile.avoid.length} health tags`
+                : ""}
+            </span>
+          )}
+        </span>
+        {!requireSetup && (open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />)}
+      </button>
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-background shadow-xl flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold">My Preferences</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-7">
+      {open && (
+        <div className="px-4 pb-4 space-y-6 border-t">
 
           {/* Cooking Methods */}
-          <section>
-            <h3 className="text-sm font-semibold mb-3">Cooking Methods</h3>
+          <section className="pt-4">
+            <div className="flex items-baseline justify-between mb-1">
+              <h3 className="text-sm font-semibold">Cooking Methods</h3>
+              <span className="text-xs text-muted-foreground">Select all that apply</span>
+            </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Check the methods you have access to. Recipes will be filtered and weighted accordingly.
+              At least one is required. Recipes will be matched to your available methods.
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {COOKING_METHODS.map((m) => {
                 const checked = draft.cookingMethods.includes(m.id);
                 return (
@@ -210,13 +187,16 @@ export function PreferencesPanel({ open, onClose, preferences, onSave }: Props) 
                 );
               })}
             </div>
+            {noMethodSelected && (
+              <p className="text-xs text-destructive mt-2">Select at least one cooking method.</p>
+            )}
           </section>
 
           {/* Health Profile */}
           <section>
             <h3 className="text-sm font-semibold mb-1">Health Profile</h3>
             <p className="text-xs text-muted-foreground mb-4">
-              Define what "healthy" means to you. These shape every recipe suggestion.
+              Define what "healthy" means to you. These shape every recipe suggestion. You can also mention additional needs when chatting with the assistant.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
@@ -251,18 +231,33 @@ export function PreferencesPanel({ open, onClose, preferences, onSave }: Props) 
               </div>
             </div>
           </section>
-        </div>
 
-        {/* Footer */}
-        <div className="flex gap-3 px-6 py-4 border-t">
-          <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" className="flex-1" onClick={handleSave}>
-            Save preferences
-          </Button>
+          {/* Footer */}
+          <div className="flex justify-end gap-3 pt-1">
+            {!requireSetup && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDraft(preferences);
+                  setOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSave}
+              disabled={noMethodSelected}
+            >
+              Save preferences
+            </Button>
+          </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
