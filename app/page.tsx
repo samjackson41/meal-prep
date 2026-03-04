@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MealCard, type MealWithStatus } from "@/components/MealCard";
+import { MealCard } from "@/components/MealCard";
+import type { MealWithStatus } from "@/lib/types";
+import { useLocalRecipes } from "@/lib/hooks/useLocalRecipes";
 import type { MealPlan } from "@/lib/schemas";
 
 export default function Home() {
@@ -12,8 +14,10 @@ export default function Home() {
   const [meals, setMeals] = useState<MealWithStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState<"spoonacular" | "claude" | null>(null);
 
   const approvedCount = meals.filter((m) => m.status === "approved").length;
+  const { saveRecipe } = useLocalRecipes();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,6 +26,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setMeals([]);
+    setSource(null);
 
     try {
       const res = await fetch("/api/meals", {
@@ -35,7 +40,8 @@ export default function Home() {
         throw new Error(data.error ?? "Something went wrong");
       }
 
-      const data: MealPlan = await res.json();
+      const data: MealPlan & { source?: "spoonacular" | "claude" } = await res.json();
+      setSource(data.source ?? null);
       const now = Date.now();
       setMeals(
         data.meals.map((meal, i) => ({
@@ -52,9 +58,14 @@ export default function Home() {
   }
 
   function handleApprove(id: string) {
-    setMeals((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: "approved" } : m))
-    );
+    setMeals((prev) => {
+      const updated = prev.map((m) =>
+        m.id === id ? { ...m, status: "approved" as const } : m
+      );
+      const approvedMeal = updated.find((m) => m.id === id);
+      if (approvedMeal) saveRecipe(approvedMeal);
+      return updated;
+    });
   }
 
   function handleRemove(id: string) {
@@ -108,10 +119,45 @@ export default function Home() {
           <p className="text-sm text-destructive mb-6">{error}</p>
         )}
 
-        {loading && (
-          <p className="text-sm text-muted-foreground">
-            Generating meals — this usually takes a few seconds…
+        {source && !loading && (
+          <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1.5">
+            Results from{" "}
+            {source === "spoonacular" ? (
+              <span className="inline-flex items-center gap-1 font-medium text-orange-600">
+                <span>🥄</span> Spoonacular
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 font-medium text-purple-600">
+                <span>✦</span> Claude AI
+              </span>
+            )}
           </p>
+        )}
+
+        {loading && (
+          <div className="flex items-center gap-3 mb-6">
+            <svg
+              className="animate-spin h-4 w-4 text-muted-foreground"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            <p className="text-sm text-muted-foreground">Searching for meals…</p>
+          </div>
         )}
 
         {meals.length > 0 && (

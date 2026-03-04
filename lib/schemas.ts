@@ -14,6 +14,9 @@ export const MealSchema = z.object({
   calories: z.number(),
   protein: z.string(),
   ingredients: z.array(IngredientSchema),
+  instructions: z.array(z.string()).optional(),
+  sourceUrl: z.string().url().optional(),
+  image: z.string().url().optional(),
 });
 
 export const MealPlanSchema = z.object({
