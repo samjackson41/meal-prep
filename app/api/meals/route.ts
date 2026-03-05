@@ -37,6 +37,7 @@ function buildSpoonacularUrl(count: number, apiKey: string): URL {
   url.searchParams.set("addRecipeInformation", "true");
   url.searchParams.set("addRecipeNutrition", "true");
   url.searchParams.set("fillIngredients", "true");
+  url.searchParams.set("instructionsRequired", "true");
   url.searchParams.set("apiKey", apiKey);
   return url;
 }
