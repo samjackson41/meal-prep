@@ -38,20 +38,6 @@ function buildSpoonacularUrl(count: number, apiKey: string): URL {
   return url;
 }
 
-async function searchSpoonacular(
-  query: string,
-  count: number
-): Promise<SpoonacularSearchResponse | null> {
-  const apiKey = process.env.SPOONACULAR_API_KEY;
-  if (!apiKey) return null;
-
-  const url = buildSpoonacularUrl(count, apiKey);
-  url.searchParams.set("query", query);
-
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json() as Promise<SpoonacularSearchResponse>;
-}
 
 async function searchSpoonacularWithParams(
   params: SpoonacularParams,
@@ -104,32 +90,19 @@ export async function POST(req: NextRequest) {
           const parsed = MealPlanSchema.parse({ meals });
           return NextResponse.json({ ...parsed, source: "spoonacular" });
         }
+        // Spoonacular returned 0 results — tell the frontend so it can re-enter the chat
+        return NextResponse.json({ error: "no_results" }, { status: 404 });
       } catch (err) {
         console.warn("Spoonacular structured search failed:", err);
+        return NextResponse.json({ error: "no_results" }, { status: 404 });
       }
     }
   }
 
-  const prompt = body.prompt?.trim() ?? "";
-
-  // --- Freeform prompt Spoonacular path ---
-  if (prompt) {
-    try {
-      const spoonacularData = await searchSpoonacular(prompt, count);
-      if (spoonacularData && spoonacularData.results.length > 0) {
-        const meals = spoonacularData.results
-          .slice(0, count)
-          .map(mapSpoonacularToMeal);
-        const parsed = MealPlanSchema.parse({ meals });
-        return NextResponse.json({ ...parsed, source: "spoonacular" });
-      }
-    } catch (err) {
-      console.warn("Spoonacular search failed, falling back to Claude:", err);
-    }
-  }
-
-  // --- Claude fallback ---
+  // --- No-key fallback: Claude generates meals directly ---
+  // Only reached when there is no Spoonacular API key at all.
   try {
+    const fallbackPrompt = body.prompt?.trim() ?? "";
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
@@ -137,7 +110,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "user",
-          content: `Generate exactly ${count} meal${count > 1 ? "s" : ""}: ${prompt}`,
+          content: `Generate exactly ${count} meal${count > 1 ? "s" : ""}: ${fallbackPrompt}`,
         },
       ],
     });

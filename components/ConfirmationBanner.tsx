@@ -9,7 +9,6 @@ interface Props {
   summary: string;
   params: SpoonacularParams;
   onConfirm: () => void;
-  onBack: () => void;
 }
 
 const PARAM_LABELS: Record<string, string> = {
@@ -21,7 +20,7 @@ const PARAM_LABELS: Record<string, string> = {
   intolerances: "Intolerances",
 };
 
-export function ConfirmationBanner({ summary, params, onConfirm, onBack }: Props) {
+export function ConfirmationBanner({ summary, params, onConfirm }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const activeParams = Object.entries(params).filter(([, v]) => v != null && v !== "");
@@ -62,10 +61,7 @@ export function ConfirmationBanner({ summary, params, onConfirm, onBack }: Props
       )}
 
       <div className="flex gap-3 pt-1">
-        <Button type="button" variant="outline" onClick={onBack} className="flex-1">
-          Back to chat
-        </Button>
-        <Button type="button" onClick={onConfirm} className="flex-1">
+        <Button type="button" onClick={onConfirm} className="w-full">
           Find meals
         </Button>
       </div>

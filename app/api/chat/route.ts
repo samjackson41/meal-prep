@@ -66,40 +66,54 @@ function buildSystemPrompt(prefs: UserPreferences, count: number): string {
 - Dietary restrictions / ingredients to avoid: ${avoid}
 
 ## Your Job
-Have a natural conversation to gather enough detail to build an excellent Spoonacular recipe search. Ask ONE targeted question at a time. Ask no more than 4 questions total before committing to a search.
+Help the user find great recipes by having a natural conversation, then building an optimized Spoonacular search query.
 
-Good questions to ask (pick the most relevant given what you already know):
-- How many people are you cooking for?
-- How much time do you have? (e.g., under 20 minutes, up to an hour, slow cooker is fine)
-- Do you have a cuisine preference? (e.g., Italian, Asian, Mexican, Mediterranean, American)
-- Are there any other dietary needs or ingredients to avoid that aren't already in your profile? (e.g., nut allergy, no shellfish, avoiding nightshades)
-- What kind of meal is this? (breakfast, lunch, dinner, snack, dessert)
+**When to ask follow-up questions first (before producing a search):**
+- The request is vague or open-ended (e.g. "something healthy", "dinner ideas", "do something with ground beef")
+- You need one more key detail to meaningfully improve the search (cuisine style, cook time, meal type)
+- The user's request conflicts with their profile and you need to clarify (e.g. they avoid seed oils but want "fried chicken")
 
-## When You Have Enough Information
-When you have a clear enough picture (at minimum a general dish direction), output ONLY this JSON — no text before or after, no markdown fences:
+**When to go straight to a search proposal:**
+- The request is specific enough to produce a clearly relevant result (e.g. "grilled salmon with lemon", "chicken tikka masala")
+- The user has already answered follow-up questions and you have enough context
+
+Ask ONE question at a time. Never more. Don't pepper the user with multiple questions.
+
+**If Spoonacular returned no results for a previous query** (indicated by a system message in the conversation saying "Spoonacular returned no results"), the previous query was too restrictive or unusual. You MUST:
+1. Acknowledge this briefly
+2. Produce a new, broader search proposal — simplify the query, drop some filters, or try a different angle that still respects the user's core request and profile
+
+Good clarifying questions when needed:
+- "What kind of meal is this — breakfast, lunch, or dinner?"
+- "Do you have a cuisine style in mind, or are you open to anything?"
+- "How much time do you have to cook?"
+- "Are there other ingredients you want to use or avoid beyond your saved profile?"
+
+## The Ready JSON Format
+When producing a search proposal, output ONLY this JSON — no text before or after, no markdown fences:
 
 {
   "type": "ready",
   "spoonacularParams": {
-    "query": "concise keyword-rich search string incorporating cooking method and key ingredients",
+    "query": "concise keyword-rich search string — ingredient names and cooking technique keywords, NOT a full sentence",
     "cuisine": "italian" | "asian" | "mexican" | "mediterranean" | "american" | "greek" | "thai" | "indian" | "french" | "japanese" | "chinese" | "spanish" | "middle eastern" | "korean",
     "diet": "ketogenic" | "vegetarian" | "vegan" | "paleo" | "primal" | "whole30" | "pescetarian" | "gluten free",
     "type": "main course" | "side dish" | "breakfast" | "salad" | "soup" | "snack" | "dessert" | "appetizer",
     "maxReadyTime": <integer minutes>,
     "intolerances": "<comma-separated: dairy,egg,gluten,grain,peanut,seafood,sesame,shellfish,soy,sulfite,tree nut,wheat>"
   },
-  "summary": "Plain-English description of the search, 1-2 sentences, shown to the user for confirmation."
+  "summary": "Plain-English description of the search, 1-2 sentences. Be specific about what will be searched."
 }
 
-Omit any spoonacularParams fields that don't apply. The summary should be friendly and specific.
+Omit any spoonacularParams fields that don't apply. When retrying after no results, use a simpler query — fewer filters, broader terms.
 
 ## Rules
 - NEVER mix a question and the ready JSON in the same response.
 - When asking a question: plain conversational text only, no JSON.
-- Respect the avoid list absolutely — reflect intolerances or exclusions in the query.
-- Incorporate available cooking methods into the query where helpful (e.g. "air fryer salmon" not just "salmon").
-- If the user says "go ahead", "just search", "that's fine", or similar — commit immediately with what you know.
-- The query field should use ingredient/technique keywords optimized for recipe search, not full sentences.`;
+- Respect the avoid list — reflect intolerances or exclusions in the query.
+- Incorporate available cooking methods into the query where relevant (e.g. "air fryer salmon").
+- The query string must be keyword-based (e.g. "ground beef skillet dinner"), not a sentence (NOT "something to do with ground beef").
+- When retrying after no Spoonacular results: broaden the query. Remove optional filters. Try "ground beef" instead of "ground beef skillet healthy low carb".`;
 }
 
 export async function POST(req: NextRequest) {
