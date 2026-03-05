@@ -23,6 +23,7 @@ export default function Home() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [confirmedParams, setConfirmedParams] = useState<SpoonacularParams | null>(null);
+  const [generatePrompt, setGeneratePrompt] = useState<string | null>(null);
   const [confirmationSummary, setConfirmationSummary] = useState("");
 
   const { preferences, savePreferences, hasPreferences } = usePreferences();
@@ -66,12 +67,22 @@ export default function Home() {
           { role: "assistant", content: data.content },
         ]);
         setPhase("chatting");
+      } else if (data.type === "generate") {
+        setChatHistory([
+          ...newHistory,
+          { role: "assistant", content: data.summary },
+        ]);
+        setConfirmedParams(null);
+        setConfirmationSummary(data.summary);
+        setGeneratePrompt(data.prompt);
+        setPhase("confirming");
       } else {
         setChatHistory([
           ...newHistory,
           { role: "assistant", content: data.summary },
         ]);
         setConfirmedParams(data.spoonacularParams);
+        setGeneratePrompt(null);
         setConfirmationSummary(data.summary);
         setPhase("confirming");
       }
@@ -95,7 +106,7 @@ export default function Home() {
   }
 
   async function handleConfirmedSearch() {
-    if (!confirmedParams) return;
+    if (!confirmedParams && !generatePrompt) return;
 
     setPhase("loading");
     setError(null);
@@ -106,25 +117,25 @@ export default function Home() {
       const res = await fetch("/api/meals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spoonacularParams: confirmedParams, count }),
+        body: JSON.stringify(
+          confirmedParams
+            ? { spoonacularParams: confirmedParams, count }
+            : { prompt: generatePrompt, count }
+        ),
       });
 
-      // Spoonacular found nothing — inject the failure into chat history and
-      // ask Claude to reformulate with a broader query.
+      // Spoonacular found nothing — drop back into chat so the user can
+      // provide more info and Claude can produce new params to retry.
       if (res.status === 404) {
-        setPhase("chatting");
-        const historyWithFailure: ChatMessage[] = [
-          ...chatHistory,
+        setChatHistory((prev) => [
+          ...prev,
           {
             role: "assistant",
-            content: "Spoonacular returned no results for that search. I need to try a different approach.",
+            content:
+              "No recipes found for that search. Can you give me more to go on — any specific ingredients or a cuisine style? I'll try again. Or if you'd prefer, just say \"generate them\" and I'll create meals for you directly.",
           },
-        ];
-        setChatHistory(historyWithFailure);
-        await sendToChat(
-          "Spoonacular returned no results for the previous query. Please reformulate with a simpler or broader search that still respects my request.",
-          historyWithFailure
-        );
+        ]);
+        setPhase("chatting");
         return;
       }
 
@@ -174,6 +185,7 @@ export default function Home() {
     setError(null);
     setChatHistory([]);
     setConfirmedParams(null);
+    setGeneratePrompt(null);
     setPrompt("");
   }
 
@@ -260,7 +272,7 @@ export default function Home() {
         )}
 
         {/* ---- CONFIRMING ---- */}
-        {phase === "confirming" && confirmedParams && (
+        {phase === "confirming" && (confirmedParams || generatePrompt) && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <button
@@ -272,23 +284,21 @@ export default function Home() {
               </button>
               {countSelect}
             </div>
-            <ConfirmationBanner
-              summary={confirmationSummary}
-              params={confirmedParams}
-              onConfirm={handleConfirmedSearch}
-            />
-            {/* Inline refinement chat */}
-            <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-2">
-                Not quite right? Describe what to change:
-              </p>
-              <div className="h-[260px] flex flex-col">
-                <ChatThread
-                  history={chatHistory}
-                  onSend={handleChatSend}
-                  loading={chatLoading}
-                />
-              </div>
+            <div className="h-[420px] flex flex-col">
+              <ChatThread
+                history={chatHistory}
+                onSend={handleChatSend}
+                loading={chatLoading}
+                disabled={true}
+                banner={
+                  <ConfirmationBanner
+                    summary={confirmationSummary}
+                    params={confirmedParams ?? undefined}
+                    onConfirm={handleConfirmedSearch}
+                    onRefine={() => setPhase("chatting")}
+                  />
+                }
+              />
             </div>
           </div>
         )}

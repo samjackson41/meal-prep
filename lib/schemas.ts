@@ -78,6 +78,11 @@ export const ChatResponseSchema = z.discriminatedUnion("type", [
     spoonacularParams: SpoonacularParamsSchema,
     summary: z.string(),
   }),
+  z.object({
+    type: z.literal("generate"),
+    prompt: z.string(),
+    summary: z.string(),
+  }),
 ]);
 
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
