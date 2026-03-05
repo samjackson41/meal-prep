@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ChatMessage } from "@/lib/schemas";
@@ -9,9 +10,11 @@ interface Props {
   history: ChatMessage[];
   onSend: (message: string) => void;
   loading: boolean;
+  disabled?: boolean;
+  banner?: React.ReactNode;
 }
 
-export function ChatThread({ history, onSend, loading }: Props) {
+export function ChatThread({ history, onSend, loading, disabled, banner }: Props) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +63,9 @@ export function ChatThread({ history, onSend, loading }: Props) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Inline banner (e.g. confirmation card) shown above the input */}
+      {banner && <div className="pt-2">{banner}</div>}
+
       {/* Input row */}
       <div className="flex gap-2 pt-3 border-t mt-2">
         <input
@@ -67,15 +73,15 @@ export function ChatThread({ history, onSend, loading }: Props) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSend())}
-          placeholder="Type a message…"
-          disabled={loading}
+          placeholder={disabled ? "Make a choice above to continue…" : "Type a message…"}
+          disabled={loading || disabled}
           className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
         />
         <Button
           type="button"
           size="icon"
           onClick={handleSend}
-          disabled={loading || !input.trim()}
+          disabled={loading || disabled || !input.trim()}
           aria-label="Send"
         >
           <Send className="h-4 w-4" />
