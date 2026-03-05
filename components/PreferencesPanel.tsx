@@ -40,7 +40,6 @@ const AVOID_PRESETS: { id: string; label: string }[] = [
   { id: "processed_flour", label: "Processed Flour" },
   { id: "gluten", label: "Gluten" },
   { id: "dairy", label: "Dairy" },
-  { id: "soy", label: "Soy" },
   { id: "artificial_additives", label: "Artificial Additives" },
 ];
 

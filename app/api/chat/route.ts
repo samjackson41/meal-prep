@@ -34,7 +34,6 @@ const AVOID_LABELS: Record<string, string> = {
   processed_flour: "processed / refined flour",
   gluten: "gluten",
   dairy: "dairy",
-  soy: "soy",
   artificial_additives: "artificial additives and preservatives",
 };
 

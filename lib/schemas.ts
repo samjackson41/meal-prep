@@ -28,7 +28,6 @@ export const AvoidTokenSchema = z.enum([
   "processed_flour",
   "gluten",
   "dairy",
-  "soy",
   "artificial_additives",
 ]);
 
