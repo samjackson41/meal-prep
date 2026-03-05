@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (.dark &);
 
 @theme inline {
   --color-background: var(--background);
@@ -48,72 +48,74 @@
 }
 
 :root {
+  /* Light — golden bun background, brown/red/green text, fields, buttons */
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(0.91 0.09 88);          /* sesame bun gold */
+  --foreground: oklch(0.25 0.07 45);          /* dark patty brown */
+  --card: oklch(0.85 0.10 82);               /* toasted bun — darker gold card */
+  --card-foreground: oklch(0.25 0.07 45);
+  --popover: oklch(0.85 0.10 82);
+  --popover-foreground: oklch(0.25 0.07 45);
+  --primary: oklch(0.48 0.22 26);             /* ketchup red — main buttons */
+  --primary-foreground: oklch(0.98 0.01 80);
+  --secondary: oklch(0.48 0.16 145);          /* lettuce green — secondary buttons */
+  --secondary-foreground: oklch(0.98 0.01 80);
+  --muted: oklch(0.88 0.07 86);              /* pale bun */
+  --muted-foreground: oklch(0.40 0.09 48);   /* medium patty brown */
+  --accent: oklch(0.48 0.16 145);            /* lettuce green */
+  --accent-foreground: oklch(0.98 0.01 80);
+  --destructive: oklch(0.48 0.22 26);
+  --border: oklch(0.50 0.10 48);             /* rich brown border */
+  --input: oklch(0.80 0.09 83);              /* deeper gold input background */
+  --ring: oklch(0.48 0.22 26);               /* ketchup red focus ring */
+  --chart-1: oklch(0.48 0.22 26);            /* ketchup red */
+  --chart-2: oklch(0.48 0.16 145);           /* lettuce green */
+  --chart-3: oklch(0.68 0.18 68);            /* cheddar orange */
+  --chart-4: oklch(0.25 0.07 45);            /* patty brown */
+  --chart-5: oklch(0.55 0.15 128);           /* pickle */
+  --sidebar: oklch(0.85 0.10 82);
+  --sidebar-foreground: oklch(0.25 0.07 45);
+  --sidebar-primary: oklch(0.48 0.22 26);
+  --sidebar-primary-foreground: oklch(0.98 0.01 80);
+  --sidebar-accent: oklch(0.48 0.16 145);
+  --sidebar-accent-foreground: oklch(0.98 0.01 80);
+  --sidebar-border: oklch(0.50 0.10 48);
+  --sidebar-ring: oklch(0.48 0.22 26);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Dark — burger brown bg, sesame bun accents, all-green primary actions */
+  --background: oklch(0.24 0.06 44);          /* deep patty brown */
+  --foreground: oklch(0.95 0.06 86);          /* sesame cream */
+  --card: oklch(0.31 0.08 43);               /* lifted brown card surface */
+  --card-foreground: oklch(0.95 0.06 86);
+  --popover: oklch(0.31 0.08 43);
+  --popover-foreground: oklch(0.95 0.06 86);
+  --primary: oklch(0.58 0.20 145);           /* lettuce green — main buttons/CTAs */
+  --primary-foreground: oklch(0.98 0.01 80);
+  --secondary: oklch(0.45 0.12 145);         /* darker green — secondary actions */
+  --secondary-foreground: oklch(0.95 0.06 86);
+  --muted: oklch(0.34 0.07 44);
+  --muted-foreground: oklch(0.82 0.10 86);   /* bun cream — readable secondary text */
+  --accent: oklch(0.86 0.12 86);             /* sesame bun gold — highlight accent */
+  --accent-foreground: oklch(0.25 0.07 45);  /* dark brown text on bun */
+  --destructive: oklch(0.58 0.22 27);        /* red kept only for destructive */
+  --border: oklch(0.45 0.10 44);             /* warm brown border */
+  --input: oklch(0.19 0.05 43);              /* dark brown input — pops against card */
+  --ring: oklch(0.58 0.20 145);             /* green focus ring */
+  --chart-1: oklch(0.58 0.20 145);          /* lettuce green */
+  --chart-2: oklch(0.86 0.12 86);           /* bun gold */
+  --chart-3: oklch(0.45 0.12 145);          /* dark green */
+  --chart-4: oklch(0.70 0.08 86);           /* pale bun */
+  --chart-5: oklch(0.62 0.16 128);          /* pickle */
+  --sidebar: oklch(0.31 0.08 43);
+  --sidebar-foreground: oklch(0.95 0.06 86);
+  --sidebar-primary: oklch(0.58 0.20 145);
+  --sidebar-primary-foreground: oklch(0.98 0.01 80);
+  --sidebar-accent: oklch(0.86 0.12 86);
+  --sidebar-accent-foreground: oklch(0.25 0.07 45);
+  --sidebar-border: oklch(0.45 0.10 44);
+  --sidebar-ring: oklch(0.58 0.20 145);
 }
 
 @layer base {
