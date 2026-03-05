@@ -23,10 +23,13 @@ The JSON must match this exact structure:
       "protein": "string (e.g. \\"32g\\")",
       "ingredients": [
         { "name": "string", "amount": "string", "unit": "string" }
-      ]
+      ],
+      "instructions": ["Step 1 description", "Step 2 description"]
     }
   ]
-}`;
+}
+
+Always include detailed step-by-step cooking instructions in the instructions array.`;
 
 function buildSpoonacularUrl(count: number, apiKey: string): URL {
   const url = new URL("https://api.spoonacular.com/recipes/complexSearch");
