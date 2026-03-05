@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { MealPlanSchema } from "@/lib/schemas";
+import { MealPlanSchema, SpoonacularParamsSchema, type SpoonacularParams } from "@/lib/schemas";
 import {
   mapSpoonacularToMeal,
   type SpoonacularSearchResponse,
@@ -28,20 +28,31 @@ The JSON must match this exact structure:
   ]
 }`;
 
-async function searchSpoonacular(
-  query: string,
-  count: number
-): Promise<SpoonacularSearchResponse | null> {
-  const apiKey = process.env.SPOONACULAR_API_KEY;
-  if (!apiKey) return null;
-
+function buildSpoonacularUrl(count: number, apiKey: string): URL {
   const url = new URL("https://api.spoonacular.com/recipes/complexSearch");
-  url.searchParams.set("query", query);
   url.searchParams.set("number", String(count));
   url.searchParams.set("addRecipeInformation", "true");
   url.searchParams.set("addRecipeNutrition", "true");
   url.searchParams.set("fillIngredients", "true");
   url.searchParams.set("apiKey", apiKey);
+  return url;
+}
+
+
+async function searchSpoonacularWithParams(
+  params: SpoonacularParams,
+  count: number
+): Promise<SpoonacularSearchResponse | null> {
+  const apiKey = process.env.SPOONACULAR_API_KEY;
+  if (!apiKey) return null;
+
+  const url = buildSpoonacularUrl(count, apiKey);
+  url.searchParams.set("query", params.query);
+  if (params.cuisine) url.searchParams.set("cuisine", params.cuisine);
+  if (params.diet) url.searchParams.set("diet", params.diet);
+  if (params.type) url.searchParams.set("type", params.type);
+  if (params.maxReadyTime) url.searchParams.set("maxReadyTime", String(params.maxReadyTime));
+  if (params.intolerances) url.searchParams.set("intolerances", params.intolerances);
 
   const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) return null;
@@ -51,8 +62,13 @@ async function searchSpoonacular(
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
 
-  if (!body || typeof body.prompt !== "string" || body.prompt.trim() === "") {
-    return NextResponse.json({ error: "prompt is required" }, { status: 400 });
+  const hasPrompt = typeof body.prompt === "string" && body.prompt.trim() !== "";
+  const hasParams = body.spoonacularParams != null;
+  if (!body || (!hasPrompt && !hasParams)) {
+    return NextResponse.json(
+      { error: "prompt or spoonacularParams is required" },
+      { status: 400 }
+    );
   }
 
   const count = typeof body.count === "number" ? body.count : 3;
@@ -63,24 +79,30 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const prompt = body.prompt.trim();
-
-  // --- Spoonacular path ---
-  try {
-    const spoonacularData = await searchSpoonacular(prompt, count);
-    if (spoonacularData && spoonacularData.results.length > 0) {
-      const meals = spoonacularData.results
-        .slice(0, count)
-        .map(mapSpoonacularToMeal);
-      const parsed = MealPlanSchema.parse({ meals });
-      return NextResponse.json({ ...parsed, source: "spoonacular" });
+  // --- Structured params path (from chat confirmation) ---
+  if (body.spoonacularParams) {
+    const paramsParsed = SpoonacularParamsSchema.safeParse(body.spoonacularParams);
+    if (paramsParsed.success) {
+      try {
+        const spoonacularData = await searchSpoonacularWithParams(paramsParsed.data, count);
+        if (spoonacularData && spoonacularData.results.length > 0) {
+          const meals = spoonacularData.results.slice(0, count).map(mapSpoonacularToMeal);
+          const parsed = MealPlanSchema.parse({ meals });
+          return NextResponse.json({ ...parsed, source: "spoonacular" });
+        }
+        // Spoonacular returned 0 results — tell the frontend so it can re-enter the chat
+        return NextResponse.json({ error: "no_results" }, { status: 404 });
+      } catch (err) {
+        console.warn("Spoonacular structured search failed:", err);
+        return NextResponse.json({ error: "no_results" }, { status: 404 });
+      }
     }
-  } catch (err) {
-    console.warn("Spoonacular search failed, falling back to Claude:", err);
   }
 
-  // --- Claude fallback ---
+  // --- No-key fallback: Claude generates meals directly ---
+  // Only reached when there is no Spoonacular API key at all.
   try {
+    const fallbackPrompt = body.prompt?.trim() ?? "";
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
@@ -88,7 +110,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "user",
-          content: `Generate exactly ${count} meal${count > 1 ? "s" : ""}: ${prompt}`,
+          content: `Generate exactly ${count} meal${count > 1 ? "s" : ""}: ${fallbackPrompt}`,
         },
       ],
     });
