@@ -9,7 +9,7 @@ const SAVED_FLAG_KEY = "meal-prep:preferences:saved";
 // All methods on by default so the first-time form is ready to save immediately
 const DEFAULT_PREFS: UserPreferences = {
   cookingMethods: CookingMethodSchema.options.slice(),
-  healthProfile: { favor: [], avoid: [] },
+  healthProfile: { favor: [] },
 };
 
 function readPrefs(): UserPreferences {
