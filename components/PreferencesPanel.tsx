@@ -34,14 +34,6 @@ const FAVOR_PRESETS: { id: string; label: string }[] = [
   { id: "leafy_greens", label: "Leafy Greens" },
 ];
 
-const AVOID_PRESETS: { id: string; label: string }[] = [
-  { id: "seed_oils", label: "Seed Oils" },
-  { id: "refined_sugar", label: "Refined Sugar" },
-  { id: "processed_flour", label: "Processed Flour" },
-  { id: "gluten", label: "Gluten" },
-  { id: "dairy", label: "Dairy" },
-  { id: "artificial_additives", label: "Artificial Additives" },
-];
 
 interface Props {
   preferences: UserPreferences;
@@ -142,8 +134,8 @@ export function PreferencesPanel({ preferences, onSave, requireSetup = false }: 
           {!requireSetup && !open && (
             <span className="ml-2 text-xs font-normal text-muted-foreground">
               {draft.cookingMethods.length} method{draft.cookingMethods.length !== 1 ? "s" : ""}
-              {draft.healthProfile.favor.length + draft.healthProfile.avoid.length > 0
-                ? ` · ${draft.healthProfile.favor.length + draft.healthProfile.avoid.length} health tags`
+              {draft.healthProfile.favor.length > 0
+                ? ` · ${draft.healthProfile.favor.length} health tags`
                 : ""}
             </span>
           )}
@@ -197,37 +189,17 @@ export function PreferencesPanel({ preferences, onSave, requireSetup = false }: 
             <p className="text-xs text-muted-foreground mb-4">
               Define what "healthy" means to you. These shape every recipe suggestion. You can also mention additional needs when chatting with the assistant.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-2 uppercase tracking-wide">
-                  Favor
-                </p>
-                <TokenPills
-                  presets={FAVOR_PRESETS}
-                  selected={draft.healthProfile.favor}
-                  onChange={(favor) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      healthProfile: { ...prev.healthProfile, favor },
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-2 uppercase tracking-wide">
-                  Avoid
-                </p>
-                <TokenPills
-                  presets={AVOID_PRESETS}
-                  selected={draft.healthProfile.avoid}
-                  onChange={(avoid) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      healthProfile: { ...prev.healthProfile, avoid },
-                    }))
-                  }
-                />
-              </div>
+            <div>
+              <TokenPills
+                presets={FAVOR_PRESETS}
+                selected={draft.healthProfile.favor}
+                onChange={(favor) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    healthProfile: { ...prev.healthProfile, favor },
+                  }))
+                }
+              />
             </div>
           </section>
 

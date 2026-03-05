@@ -22,18 +22,8 @@ export const FavorTokenSchema = z.enum([
   "leafy_greens",
 ]);
 
-export const AvoidTokenSchema = z.enum([
-  "seed_oils",
-  "refined_sugar",
-  "processed_flour",
-  "gluten",
-  "dairy",
-  "artificial_additives",
-]);
-
 export const HealthProfileSchema = z.object({
   favor: z.array(z.union([FavorTokenSchema, z.string()])),
-  avoid: z.array(z.union([AvoidTokenSchema, z.string()])),
 });
 
 export const UserPreferencesSchema = z.object({
@@ -43,7 +33,6 @@ export const UserPreferencesSchema = z.object({
 
 export type CookingMethod = z.infer<typeof CookingMethodSchema>;
 export type FavorToken = z.infer<typeof FavorTokenSchema>;
-export type AvoidToken = z.infer<typeof AvoidTokenSchema>;
 export type HealthProfile = z.infer<typeof HealthProfileSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
@@ -60,7 +49,6 @@ export const SpoonacularParamsSchema = z.object({
   diet: z.string().optional(),
   type: z.string().optional(),
   maxReadyTime: z.number().int().positive().optional(),
-  intolerances: z.string().optional(),
 });
 
 export const ChatRequestSchema = z.object({

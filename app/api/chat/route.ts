@@ -28,15 +28,6 @@ const FAVOR_LABELS: Record<string, string> = {
   leafy_greens: "leafy greens",
 };
 
-const AVOID_LABELS: Record<string, string> = {
-  seed_oils: "seed oils (canola, soybean, vegetable oil)",
-  refined_sugar: "refined sugar",
-  processed_flour: "processed / refined flour",
-  gluten: "gluten",
-  dairy: "dairy",
-  artificial_additives: "artificial additives and preservatives",
-};
-
 function labelToken(token: string, map: Record<string, string>): string {
   return map[token] ?? token;
 }
@@ -52,17 +43,11 @@ function buildSystemPrompt(prefs: UserPreferences, count: number): string {
       .map((f) => labelToken(f, FAVOR_LABELS))
       .join(", ") || "none specified";
 
-  const avoid =
-    prefs.healthProfile.avoid
-      .map((a) => labelToken(a, AVOID_LABELS))
-      .join(", ") || "none specified";
-
   return `You are a meal planning assistant helping a user find ${count} meal suggestion(s) they will love.
 
 ## User's Kitchen & Health Profile
 - Cooking methods available: ${methods}
 - Health goals / ingredients to favor: ${favor}
-- Dietary restrictions / ingredients to avoid: ${avoid}
 
 ## Your Job
 Help the user find great recipes by having a natural conversation, then building an optimized Spoonacular search query.
@@ -103,7 +88,6 @@ When producing any response that isn't a question, output ONLY the JSON — no t
     "diet": "ketogenic" | "vegetarian" | "vegan" | "paleo" | "primal" | "whole30" | "pescetarian" | "gluten free",
     "type": "main course" | "side dish" | "breakfast" | "salad" | "soup" | "snack" | "dessert" | "appetizer",
     "maxReadyTime": <integer minutes>,
-    "intolerances": "<comma-separated: dairy,egg,gluten,grain,peanut,seafood,sesame,shellfish,soy,sulfite,tree nut,wheat>"
   },
   "summary": "Plain-English description of the search, 1-2 sentences."
 }
@@ -120,7 +104,7 @@ Omit any spoonacularParams fields that don't apply. When retrying after no resul
 ## Rules
 - NEVER mix a question and the ready JSON in the same response.
 - When asking a question: plain conversational text only, no JSON.
-- Respect the avoid list — reflect intolerances or exclusions in the query.
+- Do NOT use the intolerances field at all — omit it entirely from every search.
 - Do NOT put cooking methods in the query string — use the dedicated "type" field or omit entirely.
 - Do NOT add health words (healthy, clean, lean, nutritious) to the query — the diet/intolerances fields handle that.
 - The query must be 1–3 words: the ingredient or dish name only (e.g. "ground beef", "salmon", "chicken tikka masala").
